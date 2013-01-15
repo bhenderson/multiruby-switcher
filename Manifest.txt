@@ -1,0 +1,8 @@
+.autotest
+History.txt
+Manifest.txt
+README.txt
+Rakefile
+bin/multiruby/setup
+lib/multiruby/setup.rb
+test/test_multiruby/setup.rb
