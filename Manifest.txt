@@ -3,6 +3,5 @@ History.txt
 Manifest.txt
 README.txt
 Rakefile
-bin/multiruby-setup
-lib/multiruby/setup.rb
+bin/multiruby-switcher
 lib/multiruby/switcher.rb

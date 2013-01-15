@@ -4,6 +4,7 @@
 require 'multiruby'
 
 ENV.delete 'RUBYOPT'
+ARGV << "help" if ARGV.empty?
 
 # switch stdout to fd3. eval will only read from fd1. See 'setup'
 FD = STDOUT.dup
@@ -15,6 +16,9 @@ rescue Errno::EBADF, ArgumentError
   # if fd3 is not open, STDOUT will remain unchanged.
 end
 
+Dir.chdir Multiruby.root_dir
+Multiruby.setup_dirs(false)
+
 def Multiruby.installed_versions
   in_install_dir do Dir['*'] end
 end
@@ -24,12 +28,17 @@ def shell(*args) FD.puts(*args) end
 
 def help
   puts <<-EOM
+
+  multiruby-switcher is a script to help you manage multiruby_setup
+
 Usage: #$0 spec
 
   spec:
     use|list|help|alias|<version>
 
   EOM
+
+  Multiruby.help
 end
 
 def replace_path dir = nil
@@ -113,12 +122,16 @@ ARGV.each_with_index do |spec, index|
   case spec
   when "-h", "--help", "help" then
     help
+    break
   when *Multiruby.installed_versions then
     setenv spec
     break
+  # 1.9.1 doesn't install but I don't care. I can see why Ryan might not want
+  # to update the_usual to use VERSIONS to allow customization.
+  # when "the_usual" then # TODO: update #help
   when 'use' then
     # spec maybe wrong
-    setenv spec
+    setenv ARGV[index+1]
     break
   when 'alias' then
     set_alias *ARGV[index+1,2]
@@ -126,6 +139,7 @@ ARGV.each_with_index do |spec, index|
   when 'setup' then
     setup
   else # fall back to multiruby_setup
+    ARGV.replace ARGV[index..-1] || []
     load Gem.bin_path('ZenTest', 'multiruby_setup')
   end
 end
