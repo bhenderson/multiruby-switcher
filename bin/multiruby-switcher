@@ -51,7 +51,7 @@ def replace_path dir = nil
 end
 
 def setenv version
-  return clearnenv if version == 'system'
+  return clearenv if version == 'system' or version.nil?
 
   bin,dir,gem,ver = nil
 
@@ -134,7 +134,9 @@ ARGV.each_with_index do |spec, index|
     setenv ARGV[index+1]
     break
   when 'alias' then
-    set_alias *ARGV[index+1,2]
+    version, name = ARGV[index+1,2]
+    fatal 'version and name are required' unless version and name
+    set_alias version, name
     break
   when 'setup' then
     setup
