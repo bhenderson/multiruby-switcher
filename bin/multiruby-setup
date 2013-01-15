@@ -1,0 +1,131 @@
+#!/usr/bin/env ruby
+
+# some copies from multiruby_setup
+require 'multiruby'
+
+ENV.delete 'RUBYOPT'
+
+# switch stdout to fd3. eval will only read from fd1. See 'setup'
+FD = STDOUT.dup
+begin
+  io = IO.for_fd(3)
+  io.sync = true
+  STDOUT.reopen io
+rescue Errno::EBADF, ArgumentError
+  # if fd3 is not open, STDOUT will remain unchanged.
+end
+
+def Multiruby.installed_versions
+  in_install_dir do Dir['*'] end
+end
+
+# TODO rename?
+def shell(*args) FD.puts(*args) end
+
+def help
+  puts <<-EOM
+Usage: #$0 spec
+
+  spec:
+    use|list|help|alias|<version>
+
+  EOM
+end
+
+def replace_path dir = nil
+  sep = File::PATH_SEPARATOR
+  # remove any previous multiruby from path
+  path = ENV['PATH'].split(sep).
+           delete_if{|p| p =~ /multiruby/}
+  path.unshift(dir) if dir
+  ENV['PATH'] = path.join(sep)
+end
+
+def setenv version
+  return clearnenv if version == 'system'
+
+  bin,dir,gem,ver = nil
+
+  Multiruby.in_install_dir do
+    abort "unknown version #{version}" unless test ?e, version
+    ver = version
+    ver = File.readlink ver if test ?l, ver
+    dir = File.join Dir.pwd, ver
+    bin = File.join dir, 'bin'
+    gem = Dir["#{dir}/lib/ruby/gems/*"].first.to_s
+  end
+
+  path = replace_path bin
+
+  shell 'export PATH='              + path
+  shell 'export MULTIRUBY_CURRENT=' + ver
+  shell 'hash -r' # clear shell hashed locations
+  true
+end
+
+def clearenv
+  shell 'export PATH=' + replace_path
+  shell 'unset MULTIRUBY_CURRENT'
+  shell 'hash -r' # clear shell hashed locations
+end
+
+def set_alias version, name
+  Multiruby.in_install_dir do
+    # symlink force isn't working
+    FileUtils.rm_f name if test ?l, name
+    FileUtils.ln_sf version, name
+  end
+end
+
+def setup
+  file = File.expand_path('~/.bashrc')
+
+  File.open file do |f|
+    unless f.grep(/### multiruby ###/).empty?
+      puts "Shell function already exists in #{file}"
+      return
+    end
+  end
+
+  puts "Adding shell function to #{file}"
+  File.open file, 'a' do |f|
+
+    # eval output. Anything on fd3 will not get eval'd. That's why we
+    # switched stdout to it. Then close fd3.
+    f.puts <<-EOS.gsub!(/^ */,'')
+
+      ### multiruby ###
+      # shell function
+      mrs() { exec 3>&1; eval \"$(#{__FILE__} \"$@\")\"; exec 3>&-; }
+      # tab completion function
+      _mrs() {
+        local cur=${COMP_WORDS[COMP_CWORD]}
+        COMPREPLY=( $( compgen -W 'use list setup alias `ls #{Multiruby.in_install_dir do Dir.pwd end}`' -- $cur ) )
+      }
+      complete -F _mrs -f mrs
+      mrs use default
+      ### multiruby ###
+    EOS
+  end
+end
+
+ARGV.each_with_index do |spec, index|
+  case spec
+  when "-h", "--help", "help" then
+    help
+  when *Multiruby.installed_versions then
+    setenv spec
+    break
+  when 'use' then
+    # spec maybe wrong
+    setenv spec
+    break
+  when 'alias' then
+    set_alias *ARGV[index+1,2]
+    break
+  when 'setup' then
+    setup
+  else # fall back to multiruby_setup
+    load Gem.bin_path('ZenTest', 'multiruby_setup')
+  end
+end

@@ -1,26 +1,29 @@
 = multiruby-setup
 
-* FIX (url)
+* https://github.com/bhenderson/multiruby-switcher
 
 == DESCRIPTION:
 
-FIX (describe your package)
+Simple cli for switching rubies using multiruby.
+Thanks to YP.com for supporting this.
 
 == FEATURES/PROBLEMS:
 
-* FIX (list of features or problems)
+* Beta
 
 == SYNOPSIS:
 
-  FIX (code sample of usage)
+install the gem then run
+
+  multiruby-switcher setup
 
 == REQUIREMENTS:
 
-* FIX (list of requirements)
+* ZenTest
 
 == INSTALL:
 
-* FIX (sudo gem install, anything else)
+* gem install
 
 == DEVELOPERS:
 
@@ -35,7 +38,7 @@ and generate the RDoc.
 
 (The MIT License)
 
-Copyright (c) 2013 FIX
+Copyright (c) 2013 bhenderson
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
