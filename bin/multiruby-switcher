@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 
 # some copies from multiruby_setup
+require 'rubygems'
 require 'multiruby'
 
 ENV.delete 'RUBYOPT'
@@ -96,6 +97,8 @@ def setup
     end
   end
 
+  # hardcode the ruby path so that this gem is always available at least when
+  # running this command. Also unset anyone trying to mess with us.
   puts "Adding shell function to #{file}"
   File.open file, 'a' do |f|
 
@@ -105,7 +108,11 @@ def setup
 
       ### multiruby ###
       # shell function
-      mrs() { exec 3>&1; eval \"$(#{__FILE__} \"$@\")\"; exec 3>&-; }
+      mrs() {
+        exec 3>&1
+        eval \"$(env -u RUBYOPT -u GEM_HOME -u GEM_PATH #{Gem.ruby} -S multiruby-switcher \"$@\")\"
+        exec 3>&-
+      }
       # tab completion function
       _mrs() {
         local cur=${COMP_WORDS[COMP_CWORD]}
