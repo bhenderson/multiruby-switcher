@@ -46,7 +46,7 @@ def replace_path dir = nil
   sep = File::PATH_SEPARATOR
   # remove any previous multiruby from path
   path = ENV['PATH'].split(sep).
-           delete_if{|p| p =~ /multiruby/}
+           delete_if{|p| p.include? Multiruby.root_dir}
   path.unshift(dir) if dir
   ENV['PATH'] = path.join(sep)
 end
