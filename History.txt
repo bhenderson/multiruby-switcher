@@ -1,3 +1,16 @@
+=== 0.1.1 / 2013-09-12
+
+* 7 unknowns:
+
+  * Better way to look in path.
+  * Bump version.
+  * Change how the script is called to support isolated gem environments.
+  * Correct manifest. Add gitignore. Correct some setup stuff.
+  * Fix argument error to set_alias. Allow use nil.
+  * Initial.
+  * Update all hoe stuffs.
+
+
 === 1.0.0 / 2013-01-15
 
 * 1 major enhancement
