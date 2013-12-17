@@ -17,8 +17,9 @@ rescue Errno::EBADF, ArgumentError
   # if fd3 is not open, STDOUT will remain unchanged.
 end
 
-Dir.chdir Multiruby.root_dir
-Multiruby.setup_dirs(false)
+Multiruby.in_root_dir do
+  Multiruby.setup_dirs(false)
+end
 
 def Multiruby.installed_versions
   in_install_dir do Dir['*'] end
@@ -35,7 +36,7 @@ def help
 Usage: #$0 spec
 
   spec:
-    use|list|help|alias|<version>
+    use|list|help|alias|local|<version>
 
   EOM
 
@@ -87,6 +88,23 @@ def set_alias version, name
   end
 end
 
+def set_local_alias version
+  link = File.join Dir.pwd, '.multiruby'
+  if test ?l, link
+    file = File.readlink link
+    unless file == File.expand_path(file, Multiruby.root_dir)
+      warn "#{link} already exists and does not link to a multiruby file."
+      return
+    else
+      FileUtils.rm_f link
+    end
+  end
+  Multiruby.in_install_dir do
+    vers = File.expand_path(version, Dir.pwd)
+    FileUtils.ln_sf vers, link
+  end
+end
+
 def setup
   file = File.expand_path('~/.bashrc')
 
@@ -116,9 +134,14 @@ def setup
       # tab completion function
       _mrs() {
         local cur=${COMP_WORDS[COMP_CWORD]}
-        COMPREPLY=( $( compgen -W 'use list setup alias `ls #{Multiruby.in_install_dir do Dir.pwd end}`' -- $cur ) )
+        COMPREPLY=( $( compgen -W 'use list local setup alias `ls #{Multiruby.in_install_dir do Dir.pwd end}`' -- $cur ) )
       }
       complete -F _mrs -f mrs
+      if test -L .multiruby; then
+        default=$(readlink .multiruby | xargs basename)
+      else
+        default=default
+      fi
       mrs use default
       ### multiruby ###
     EOS
@@ -144,6 +167,10 @@ ARGV.each_with_index do |spec, index|
     version, name = ARGV[index+1,2]
     fatal 'version and name are required' unless version and name
     set_alias version, name
+    break
+  when 'local' then
+    version = ARGV[index+1] || ENV['MULTIRUBY_CURRENT']
+    set_local_alias version
     break
   when 'setup' then
     setup
