@@ -3,7 +3,7 @@
 require 'rubygems'
 require 'hoe'
 
-Hoe.plugin :git
+Hoe.plugin :git, :version
 
 Hoe.spec 'multiruby-switcher' do
   developer('Brian Henderson', 'henderson.bj@gmail.com')
